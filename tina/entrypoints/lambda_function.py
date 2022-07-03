@@ -9,6 +9,6 @@ client = boto3.client("dynamodb")
 
 
 def lambda_handler(event, context):
-    Scheduler().execute_all()
+    executed_count = Scheduler().execute_all()
 
-    return {"statusCode": 200, "body": "done"}
+    return {"statusCode": 200, "body": f"Executed {executed_count} tasks"}

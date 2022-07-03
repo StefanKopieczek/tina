@@ -30,10 +30,11 @@ class Scheduler:
 
         self.callback_map = {}
 
-    def execute_all(self):
+    def execute_all(self) -> int:
         tasks = self.get_overdue_tasks()
         for task in tasks:
             self._invoke_action(task.action.actionKey)
+        return len(tasks)
 
     def get_overdue_tasks(self) -> list[ScheduleEntry]:
         today = self.clock().date()
