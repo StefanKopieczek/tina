@@ -13,7 +13,10 @@ clean-zip:
 .PHONY: zip
 zip: clean-zip out/tina.zip
 
-deploy: clean-zip out/tina.zip
+test: venv
+	python -m unittest
+
+deploy: test clean-zip out/tina.zip
 	aws lambda update-function-code --function-name tina-checkin --zip-file fileb://out/tina.zip --profile stefankopieczek-iamadmin
 
 .PHONY: invoke

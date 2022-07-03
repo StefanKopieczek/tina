@@ -1,14 +1,19 @@
-import datetime
+from datetime import datetime, date, timezone
 import boto3
-from ..scheduler import new_dynamodb_session, get_schedule_on_date
+
+from tina.scheduler import ScheduleEntry, ScheduledAction
+
+from ..scheduler import SchedulePersistence
 
 client = boto3.client("dynamodb")
 
 
 def lambda_handler(event, context):
-    dynamodb = new_dynamodb_session()
+    persistence = SchedulePersistence()
+    entries = persistence.get_schedule_on_date(date(2022, 7, 3))
+    output = [
+        (entry.timeUtc.strftime("%Y/%m/%d %H:%M:%S"), entry.action.actionKey)
+        for entry in entries
+    ]
 
-    return {
-        "statusCode": 200,
-        "body": get_schedule_on_date(dynamodb, datetime.date(2022, 1, 1)),
-    }
+    return {"statusCode": 200, "body": output}
