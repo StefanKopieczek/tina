@@ -23,4 +23,4 @@ def get_schedule_on_date(
 
 
 def _get_epoch_day_for_date(date: datetime.date) -> int:
-    return 0  # TODO
+    return (date - datetime.date(1970, 1, 1)).days
