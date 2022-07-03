@@ -21,11 +21,11 @@ class SchedulePersistence:
         )["Items"]
         return [self._deserialize_entry(result) for result in results]
 
-    def put_schedule_entry(self, entry: ScheduleEntry):
+    def put_schedule_entry(self, entry: ScheduleEntry) -> None:
         self.table.put_item(Item=self._serialize_entry(entry))
 
     @staticmethod
-    def _serialize_entry(entry: ScheduleEntry):
+    def _serialize_entry(entry: ScheduleEntry) -> dict[str, any]:
         return {
             "EpochDay": _get_epoch_day_for_date(entry.timeUtc.date()),
             "EpochTime": int(entry.timeUtc.timestamp()),
@@ -33,7 +33,7 @@ class SchedulePersistence:
         }
 
     @staticmethod
-    def _deserialize_entry(entry_item: Dict[str, any]):
+    def _deserialize_entry(entry_item: dict[str, any]) -> ScheduleEntry:
         return ScheduleEntry(
             timeUtc=datetime.fromtimestamp(entry_item["EpochTime"], timezone.utc),
             action=ScheduledAction(actionKey=entry_item["ActionKey"]),

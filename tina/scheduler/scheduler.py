@@ -1,7 +1,11 @@
+import logging
 from typing import Callable
 from .persistence import SchedulePersistence
 from .objects import ScheduleEntry, ScheduledAction
 from datetime import datetime, timezone, timedelta
+
+
+logger = logging.getLogger(__name__)
 
 
 # Our schedule is bucketed by day, so we can't look back an unbounded period
@@ -24,6 +28,13 @@ class Scheduler:
             clock = lambda: datetime.now(timezone.utc)
         self.clock = clock
 
+        self.callback_map = {}
+
+    def execute_all(self):
+        tasks = self.get_overdue_tasks()
+        for task in tasks:
+            self._invoke_action(task.action.actionKey)
+
     def get_overdue_tasks(self) -> list[ScheduleEntry]:
         today = self.clock().date()
         days = [
@@ -34,9 +45,18 @@ class Scheduler:
         tasks = [task for bucket in day_buckets for task in bucket]
         return sorted(tasks, key=lambda task: task.timeUtc)
 
-    def do_with_delay(self, action_key: str, delay: timedelta):
+    def do_with_delay(self, action_key: str, delay: timedelta) -> None:
         self.do_at_time(action_key, self.clock() + delay)
 
-    def do_at_time(self, action_key: str, due_time: datetime):
+    def do_at_time(self, action_key: str, due_time: datetime) -> None:
         entry = ScheduleEntry(timeUtc=due_time, action=ScheduledAction(action_key))
         self.persistence.put_schedule_entry(entry)
+
+    def register_action(self, action_key: str, callback_fn: Callable[[], None]) -> None:
+        self.callback_map[action_key] = callback_fn
+
+    def _invoke_action(self, action_key: str) -> None:
+        if action_key in self.callback_map:
+            self.callback_map[action_key]()
+        else:
+            logger.error("Action '%s' fired, but no handler was registered", action_key)

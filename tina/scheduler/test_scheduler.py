@@ -77,6 +77,24 @@ class TestTaskSubmission(unittest.TestCase):
         )
 
 
+class TestTaskExecution(unittest.TestCase):
+    def test_due_tasks_execute(self):
+        persistence = MockPersistence.with_tasks(
+            {
+                "2022/07/03 12:25:00": "Due task 1",
+                "2022/07/03 18:25:00": "Due task 2",
+                "2022/07/04 18:31:00": "Not due",
+            }
+        )
+        tracker = []
+        scheduler = Scheduler(persistence, NOW)
+        scheduler.register_action("Due task 1", lambda: tracker.append(1))
+        scheduler.register_action("Due task 2", lambda: tracker.append(2))
+        scheduler.register_action("Not due", lambda: tracker.append(3))
+        scheduler.execute_all()
+        self.assertEqual(tracker, [1, 2])
+
+
 class MockPersistence:
     def __init__(self, tasks=None):
         if tasks is None:

@@ -9,11 +9,6 @@ client = boto3.client("dynamodb")
 
 
 def lambda_handler(event, context):
-    scheduler = Scheduler()
-    overdue_tasks = scheduler.get_overdue_tasks()
-    output = [
-        (entry.timeUtc.strftime("%Y/%m/%d %H:%M:%S"), entry.action.actionKey)
-        for entry in overdue_tasks
-    ]
+    Scheduler().execute_all()
 
-    return {"statusCode": 200, "body": output}
+    return {"statusCode": 200, "body": "done"}
