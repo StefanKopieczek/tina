@@ -1,7 +1,7 @@
 from __future__ import annotations
 import typing
 import unittest
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from .scheduler import Scheduler
 from .objects import ScheduleEntry, ScheduledAction
 from .persistence import SchedulePersistence
@@ -53,6 +53,28 @@ class TestTaskRetrieval(unittest.TestCase):
         actual = scheduler.get_overdue_tasks()
         expected = MockPersistence.parse_action_descriptors(tasks)
         self.assertEqual(expected, actual)
+
+
+class TestTaskSubmission(unittest.TestCase):
+    def test_do_in_a_week(self):
+        persistence = MockPersistence()
+        scheduler = Scheduler(persistence, NOW)
+        scheduler.do_with_delay("Example", timedelta(weeks=1))
+        self.assertIn(
+            MockPersistence.parse_action_descriptor(("2022/07/10 18:30:00", "Example")),
+            persistence.tasks,
+        )
+
+    def test_do_on_christmas_day(self):
+        persistence = MockPersistence()
+        scheduler = Scheduler(persistence, NOW)
+        scheduler.do_at_time(
+            "Example", datetime(year=2022, month=12, day=25, tzinfo=timezone.utc)
+        )
+        self.assertIn(
+            MockPersistence.parse_action_descriptor(("2022/12/25 00:00:00", "Example")),
+            persistence.tasks,
+        )
 
 
 class MockPersistence:

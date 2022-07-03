@@ -1,6 +1,6 @@
 from typing import Callable
 from .persistence import SchedulePersistence
-from .objects import ScheduleEntry
+from .objects import ScheduleEntry, ScheduledAction
 from datetime import datetime, timezone, timedelta
 
 
@@ -33,3 +33,10 @@ class Scheduler:
         day_buckets = [self.persistence.get_schedule_on_date(day) for day in days]
         tasks = [task for bucket in day_buckets for task in bucket]
         return sorted(tasks, key=lambda task: task.timeUtc)
+
+    def do_with_delay(self, action_key: str, delay: timedelta):
+        self.do_at_time(action_key, self.clock() + delay)
+
+    def do_at_time(self, action_key: str, due_time: datetime):
+        entry = ScheduleEntry(timeUtc=due_time, action=ScheduledAction(action_key))
+        self.persistence.put_schedule_entry(entry)
