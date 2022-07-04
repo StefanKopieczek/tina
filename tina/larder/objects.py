@@ -7,5 +7,5 @@ class LarderItem:
     name: str
     checkFrequencyDays: int
     lastChecked: datetime  # Epoch seconds
-    quantity: int
+    quantity: float
     replaceAt: int  # Buy if fewer than this

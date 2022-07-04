@@ -1,5 +1,6 @@
 from dataclasses import replace
 from datetime import datetime, timezone, timedelta
+from decimal import Decimal
 from typing import Dict
 from .objects import LarderItem
 from boto3 import Session
@@ -29,7 +30,7 @@ class Larder:
     def put_item(self, item: LarderItem) -> None:
         self.table.put_item(Item=self._serialize_entry(item))
 
-    def update_quantity(self, item_name: str, new_quantity: int) -> None:
+    def update_quantity(self, item_name: str, new_quantity: float) -> None:
         old_item = self.get_item(item_name)
         updated_item = replace(
             old_item, quantity=new_quantity, lastChecked=self.clock()
@@ -50,7 +51,7 @@ class Larder:
             name=entry_item["ItemName"],
             checkFrequencyDays=entry_item["CheckFrequencyInDays"],
             lastChecked=datetime.fromtimestamp(entry_item["LastChecked"], timezone.utc),
-            quantity=entry_item["Quantity"],
+            quantity=float(entry_item["Quantity"]),
             replaceAt=entry_item["ReplaceAt"],
         )
 
@@ -60,6 +61,6 @@ class Larder:
             "ItemName": entry.name,
             "CheckFrequencyInDays": entry.checkFrequencyDays,
             "LastChecked": int(entry.lastChecked.timestamp()),
-            "Quantity": entry.quantity,
+            "Quantity": Decimal(str(entry.quantity)),
             "ReplaceAt": entry.replaceAt,
         }
