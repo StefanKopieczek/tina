@@ -5,7 +5,7 @@ from .secrets import get_sender_number, get_recipients, get_twilio_creds
 TWILIO_SMS_URL = "https://api.twilio.com/2010-04-01/Accounts/{}/Messages.json"
 
 
-def notify(message: str) -> None:
+def notify_all(message: str) -> None:
     for recipient in get_recipients():
         send_sms(recipient, message)
 

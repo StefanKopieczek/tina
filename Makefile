@@ -18,8 +18,14 @@ test: venv
 
 deploy: test clean-zip out/tina.zip
 	aws lambda update-function-code --function-name tina-checkin --zip-file fileb://out/tina.zip --profile stefankopieczek-iamadmin
+	aws lambda update-function-code --function-name tina-respond --zip-file fileb://out/tina.zip --profile stefankopieczek-iamadmin
 
-.PHONY: invoke
-invoke:
+.PHONY: invoke-checkin
+invoke-checkin:
 	aws lambda invoke --function-name tina-checkin out/result --profile stefankopieczek-iamadmin
+	cat out/result | jq
+
+.PHONY: invoke-respond
+invoke-respond:
+	aws lambda invoke --function-name tina-respond out/result --profile stefankopieczek-iamadmin
 	cat out/result | jq
