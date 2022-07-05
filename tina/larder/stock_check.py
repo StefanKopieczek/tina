@@ -1,3 +1,4 @@
+from datetime import timedelta
 import inflect
 import re
 
@@ -6,14 +7,33 @@ from random import choice
 from ..conversation import Conversation, ConversationTracker, state
 from ..dialog import greeting, yesorno
 from .persistence import Larder
+from ..scheduler import Scheduler
+from ..twilio import get_recipients
 
 
 number_regex = re.compile("[\d\.]+")
 
 
+def maybe_check_stock():
+    for recipient in get_recipients():
+        stock_check = StockCheck(ConversationTracker(), recipient)
+        if stock_check.should_initiate():
+            stock_check.initiate()
+
+
 class StockCheck(Conversation):
-    def __init__(self, conversation_tracker: ConversationTracker, recipient: str):
+    ACTION_KEY = "StockCheck"
+
+    def __init__(
+        self,
+        conversation_tracker: ConversationTracker,
+        recipient: str,
+        scheduler: Scheduler = None,
+    ):
         super().__init__(conversation_tracker, recipient)
+        if scheduler is None:
+            scheduler = Scheduler
+        self.scheduler = scheduler
 
     def should_initiate(self):
         larder = Larder()
@@ -43,6 +63,7 @@ class StockCheck(Conversation):
             self.ask_next_question()
         elif user_preference == "no":
             self.send("That's ok! Another time then.")
+            self.scheduler.do_with_delay(self.ACTION_KEY, timedelta(days=1))
         else:
             self.send("Sorry, I didn't quite get that. Try again?")
 
@@ -72,6 +93,7 @@ class StockCheck(Conversation):
             )
 
     def finish(self):
+        self.scheduler().do_with_delay(self.ACTION_KEY, timedelta(days=1))
         self.send(
             choice(
                 [

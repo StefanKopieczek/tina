@@ -111,6 +111,9 @@ class MockPersistence:
     def put_schedule_entry(self, entry: ScheduleEntry):
         self.tasks.append(entry)
 
+    def delete_schedule_entry(self, entry: ScheduleEntry):
+        self.tasks.remove(entry)
+
     def cast(self) -> SchedulePersistence:
         return typing.cast(SchedulePersistence, self)
 

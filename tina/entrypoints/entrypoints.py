@@ -1,14 +1,14 @@
 from ..conversation import ConversationTracker
-from ..larder import StockCheck
+from ..larder import StockCheck, maybe_check_stock
+from ..scheduler import Scheduler
 from ..twilio import get_recipients
 from urllib.parse import unquote
 
 
 def check_in(event, context):
-    for recipient in get_recipients():
-        stock_check = StockCheck(ConversationTracker(), recipient)
-        if stock_check.should_initiate:
-            stock_check.initiate()
+    scheduler = Scheduler()
+    scheduler.register_action(StockCheck.ACTION_KEY, maybe_check_stock)
+    scheduler.execute_all()
     return {"statusCode": 200, "body": "Done!"}
 
 

@@ -24,6 +24,14 @@ class SchedulePersistence:
     def put_schedule_entry(self, entry: ScheduleEntry) -> None:
         self.table.put_item(Item=self._serialize_entry(entry))
 
+    def delete_schedule_entry(self, entry: ScheduleEntry) -> None:
+        self.table.delete_item(
+            Key={
+                "EpochDay": _get_epoch_day_for_date(entry.timeUtc.date()),
+                "EpochTime": int(entry.timeUtc.timestamp()),
+            }
+        )
+
     @staticmethod
     def _serialize_entry(entry: ScheduleEntry) -> dict[str, any]:
         return {

@@ -34,6 +34,7 @@ class Scheduler:
         tasks = self.get_overdue_tasks()
         for task in tasks:
             self._invoke_action(task.action.actionKey)
+            self.persistence.delete_schedule_entry(task)
         return len(tasks)
 
     def get_overdue_tasks(self) -> list[ScheduleEntry]:
