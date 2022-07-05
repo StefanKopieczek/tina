@@ -1,7 +1,7 @@
 from dataclasses import replace
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
-from typing import Dict
+from typing import Dict, List
 from .objects import LarderItem
 from boto3 import Session
 from boto3.dynamodb.conditions import Key
@@ -19,7 +19,7 @@ class Larder:
             clock = lambda: datetime.now(timezone.utc)
         self.clock = clock
 
-    def get_contents(self) -> list[LarderItem]:
+    def get_contents(self) -> List[LarderItem]:
         results = self.table.scan()["Items"]
         return [self._deserialize_entry(item) for item in results]
 
@@ -46,7 +46,7 @@ class Larder:
         ]
 
     @staticmethod
-    def _deserialize_entry(entry_item: dict[str, any]) -> LarderItem:
+    def _deserialize_entry(entry_item: Dict[str, any]) -> LarderItem:
         return LarderItem(
             name=entry_item["ItemName"],
             checkFrequencyDays=entry_item["CheckFrequencyInDays"],
@@ -56,7 +56,7 @@ class Larder:
         )
 
     @staticmethod
-    def _serialize_entry(entry: LarderItem) -> dict[str, any]:
+    def _serialize_entry(entry: LarderItem) -> Dict[str, any]:
         return {
             "ItemName": entry.name,
             "CheckFrequencyInDays": entry.checkFrequencyDays,

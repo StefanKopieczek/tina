@@ -1,5 +1,5 @@
 from datetime import date, datetime, timezone
-from typing import Dict
+from typing import Dict, List
 from .objects import ScheduleEntry, ScheduledAction
 from boto3 import Session
 from boto3.dynamodb.conditions import Key
@@ -14,7 +14,7 @@ class SchedulePersistence:
         self.session = Session().resource("dynamodb")
         self.table = self.session.Table(SCHEDULE_TABLE)
 
-    def get_schedule_on_date(self, theDate: date) -> list[ScheduleEntry]:
+    def get_schedule_on_date(self, theDate: date) -> List[ScheduleEntry]:
         partition_key = _get_epoch_day_for_date(theDate)
         results = self.table.query(
             KeyConditionExpression=Key("EpochDay").eq(partition_key)
@@ -33,7 +33,7 @@ class SchedulePersistence:
         )
 
     @staticmethod
-    def _serialize_entry(entry: ScheduleEntry) -> dict[str, any]:
+    def _serialize_entry(entry: ScheduleEntry) -> Dict[str, any]:
         return {
             "EpochDay": _get_epoch_day_for_date(entry.timeUtc.date()),
             "EpochTime": int(entry.timeUtc.timestamp()),
@@ -41,7 +41,7 @@ class SchedulePersistence:
         }
 
     @staticmethod
-    def _deserialize_entry(entry_item: dict[str, any]) -> ScheduleEntry:
+    def _deserialize_entry(entry_item: Dict[str, any]) -> ScheduleEntry:
         return ScheduleEntry(
             timeUtc=datetime.fromtimestamp(entry_item["EpochTime"], timezone.utc),
             action=ScheduledAction(actionKey=entry_item["ActionKey"]),

@@ -1,5 +1,5 @@
 import logging
-from typing import Callable
+from typing import Callable, List
 from .persistence import SchedulePersistence
 from .objects import ScheduleEntry, ScheduledAction
 from datetime import datetime, timezone, timedelta
@@ -37,7 +37,7 @@ class Scheduler:
             self.persistence.delete_schedule_entry(task)
         return len(tasks)
 
-    def get_overdue_tasks(self) -> list[ScheduleEntry]:
+    def get_overdue_tasks(self) -> List[ScheduleEntry]:
         today = self.clock().date()
         days = [
             today - timedelta(days=offset)

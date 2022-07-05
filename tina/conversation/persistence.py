@@ -19,7 +19,7 @@ class ConversationsPersistence:
         return item["ConversationKey"], item["State"], item["Data"]
 
     def set_current_conversation(
-        self, recipient: str, conversation_key: str, state: str, data: dict[str, Any]
+        self, recipient: str, conversation_key: str, state: str, data: Dict[str, Any]
     ):
         self.table.put_item(
             Item={

@@ -1,9 +1,10 @@
+from typing import List, Tuple
 import boto3
 import json
 from botocore.exceptions import ClientError
 
 
-def get_twilio_creds() -> tuple[str, str]:
+def get_twilio_creds() -> Tuple[str, str]:
     secret_name = "arn:aws:secretsmanager:eu-west-1:833033589552:secret:twilio-NNMyv4"
     region_name = "eu-west-1"
     secret = get_secret(secret_name, region_name)
@@ -16,7 +17,7 @@ def get_sender_number() -> str:
     return get_secret(secret_name, region_name)["sender_number"]
 
 
-def get_recipients() -> list[str]:
+def get_recipients() -> List[str]:
     secret_name = "arn:aws:secretsmanager:eu-west-1:833033589552:secret:twilio_phone_numbers-YRSMgN"
     region_name = "eu-west-1"
     return get_secret(secret_name, region_name)["recipients"].split(",")

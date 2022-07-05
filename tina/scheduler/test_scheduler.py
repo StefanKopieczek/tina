@@ -99,13 +99,13 @@ class MockPersistence:
     def __init__(self, tasks=None):
         if tasks is None:
             tasks = []
-        self.tasks: list[ScheduleEntry] = tasks
+        self.tasks: List[ScheduleEntry] = tasks
 
     @classmethod
     def with_tasks(clazz, descriptors: map[str, str]) -> MockPersistence:
         return clazz(MockPersistence.parse_action_descriptors(descriptors))
 
-    def get_schedule_on_date(self, theDate: date) -> list[ScheduleEntry]:
+    def get_schedule_on_date(self, theDate: date) -> typing.List[ScheduleEntry]:
         return [task for task in self.tasks if task.timeUtc.date() == theDate]
 
     def put_schedule_entry(self, entry: ScheduleEntry):
