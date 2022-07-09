@@ -1,5 +1,6 @@
 from datetime import timedelta
 import inflect
+import logging
 import re
 
 from random import choice
@@ -11,6 +12,7 @@ from ..scheduler import Scheduler
 from ..twilio import get_recipients
 
 
+logger = logging.getLogger(__name__)
 number_regex = re.compile("[\d\.]+")
 
 
@@ -18,7 +20,10 @@ def maybe_check_stock():
     for recipient in get_recipients():
         stock_check = StockCheck(ConversationTracker(), recipient)
         if stock_check.should_initiate():
+            logging.info("Stock check needed for one or more items - initiating")
             stock_check.initiate()
+        else:
+            logging.info("Stock is up to date - will not request stock check")
 
 
 class StockCheck(Conversation):

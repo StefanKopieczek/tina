@@ -9,10 +9,19 @@ logging.getLogger("tina").setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
+ALL_ACTIONS = [
+    (StockCheck.ACTION_KEY, maybe_check_stock),
+]
+
+
 def check_in(event, context):
     logger.info("Running scheduled check-in")
     scheduler = Scheduler()
-    scheduler.register_action(StockCheck.ACTION_KEY, maybe_check_stock)
+
+    for action_key, handler in ALL_ACTIONS:
+        scheduler.register_action(action_key, handler)
+        scheduler.ensure_scheduled(action_key)
+
     scheduler.execute_all()
     return {"statusCode": 200, "body": "Done!"}
 

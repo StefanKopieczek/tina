@@ -1,11 +1,10 @@
 from __future__ import annotations
-import typing
 import unittest
 from datetime import date, datetime, timedelta, timezone
+from typing import List, cast
 from .scheduler import Scheduler
 from .objects import ScheduleEntry, ScheduledAction
 from .persistence import SchedulePersistence
-from tina.scheduler import persistence
 
 
 TEST_TIME = datetime(
@@ -105,8 +104,8 @@ class MockPersistence:
     def with_tasks(clazz, descriptors: map[str, str]) -> MockPersistence:
         return clazz(MockPersistence.parse_action_descriptors(descriptors))
 
-    def get_schedule_on_date(self, theDate: date) -> typing.List[ScheduleEntry]:
-        return [task for task in self.tasks if task.timeUtc.date() == theDate]
+    def get_due_entries(self, current_time):
+        return [task for task in self.tasks if task.timeUtc <= current_time]
 
     def put_schedule_entry(self, entry: ScheduleEntry):
         self.tasks.append(entry)
@@ -115,7 +114,7 @@ class MockPersistence:
         self.tasks.remove(entry)
 
     def cast(self) -> SchedulePersistence:
-        return typing.cast(SchedulePersistence, self)
+        return cast(SchedulePersistence, self)
 
     @staticmethod
     def parse_action_descriptor(descriptor):

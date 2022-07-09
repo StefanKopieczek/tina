@@ -8,12 +8,6 @@ from datetime import datetime, timezone, timedelta
 logger = logging.getLogger(__name__)
 
 
-# Our schedule is bucketed by day, so we can't look back an unbounded period
-# for tasks that are overdue. Since we should run and reschedule any overdue tasks
-# fairly frequently, we don't need to go back too far.
-OVERDUE_TASK_LOOKBACK_DAYS = 3
-
-
 class Scheduler:
     def __init__(
         self,
@@ -33,7 +27,7 @@ class Scheduler:
     def execute_all(self) -> int:
         tasks = self.get_overdue_tasks()
         if tasks:
-            logger.info("Executing due tasks: {}", tasks)
+            logger.info(f"Executing due tasks: {tasks}")
         else:
             logger.info("No tasks due")
         for task in tasks:
@@ -42,13 +36,7 @@ class Scheduler:
         return len(tasks)
 
     def get_overdue_tasks(self) -> List[ScheduleEntry]:
-        today = self.clock().date()
-        days = [
-            today - timedelta(days=offset)
-            for offset in range(OVERDUE_TASK_LOOKBACK_DAYS + 1)
-        ]
-        day_buckets = [self.persistence.get_schedule_on_date(day) for day in days]
-        tasks = [task for bucket in day_buckets for task in bucket]
+        tasks = self.persistence.get_due_entries(current_time=self.clock())
         return sorted(tasks, key=lambda task: task.timeUtc)
 
     def do_with_delay(self, action_key: str, delay: timedelta) -> None:
@@ -56,8 +44,15 @@ class Scheduler:
 
     def do_at_time(self, action_key: str, due_time: datetime) -> None:
         entry = ScheduleEntry(timeUtc=due_time, action=ScheduledAction(action_key))
-        logger.info(f"Rescheduled {action_key} for {due_time}")
+        logger.info(f"Scheduled {action_key} for {due_time}")
         self.persistence.put_schedule_entry(entry)
+
+    def ensure_scheduled(self, action_key) -> None:
+        existing_entries = self.persistence.get_entries_for_action(action_key)
+        logger.debug(existing_entries)
+        if not existing_entries:
+            logger.warn(f"Action {action_key} was not scheduled; will run immediately")
+            self.do_at_time(action_key, self.clock())
 
     def register_action(self, action_key: str, callback_fn: Callable[[], None]) -> None:
         self.callback_map[action_key] = callback_fn
