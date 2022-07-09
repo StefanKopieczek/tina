@@ -22,10 +22,8 @@ deploy: test clean-zip out/tina.zip
 
 .PHONY: invoke-checkin
 invoke-checkin:
-	aws lambda invoke --function-name tina-checkin out/result --profile stefankopieczek-iamadmin --log-type Tail
-	cat out/result | jq
+	aws lambda invoke --function-name tina-checkin out/result --profile stefankopieczek-iamadmin --log-type Tail | jq -r '.LogResult | @base64d'
 
 .PHONY: invoke-respond
 invoke-respond:
-	aws lambda invoke --function-name tina-respond out/result --profile stefankopieczek-iamadmin --log-type Tail
-	cat out/result | jq
+	aws lambda invoke --function-name tina-respond out/result --profile stefankopieczek-iamadmin --log-type Tail | jq -r '.LogResult | @base64d'
