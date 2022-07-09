@@ -17,8 +17,8 @@ test: venv
 	python -m unittest
 
 deploy: test clean-zip out/tina.zip
-	aws lambda update-function-code --function-name tina-checkin --zip-file fileb://out/tina.zip --profile stefankopieczek-iamadmin
-	aws lambda update-function-code --function-name tina-respond --zip-file fileb://out/tina.zip --profile stefankopieczek-iamadmin
+	aws lambda update-function-code --function-name tina-checkin --zip-file fileb://out/tina.zip --profile stefankopieczek-iamadmin --log-type Tail
+	aws lambda update-function-code --function-name tina-respond --zip-file fileb://out/tina.zip --profile stefankopieczek-iamadmin --log-type Tail
 
 .PHONY: invoke-checkin
 invoke-checkin:
