@@ -48,7 +48,7 @@ class StockCheck(Conversation):
                     "Is now a good time for a quick stock check?",
                     "Mind checking the larder for me?",
                     "I just wanted to check if you're running out of anything. Is now a good time?",
-                    "Could you check on some things in the fridge/cupboards for me?",
+                    "Could you check on some things in the fridge and cupboards for me?",
                 ]
             )
         )

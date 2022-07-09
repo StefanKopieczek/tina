@@ -32,6 +32,10 @@ class Scheduler:
 
     def execute_all(self) -> int:
         tasks = self.get_overdue_tasks()
+        if tasks:
+            logger.info("Executing due tasks: {}", tasks)
+        else:
+            logger.info("No tasks due")
         for task in tasks:
             self._invoke_action(task.action.actionKey)
             self.persistence.delete_schedule_entry(task)
@@ -52,6 +56,7 @@ class Scheduler:
 
     def do_at_time(self, action_key: str, due_time: datetime) -> None:
         entry = ScheduleEntry(timeUtc=due_time, action=ScheduledAction(action_key))
+        logger.info(f"Rescheduled {action_key} for {due_time}")
         self.persistence.put_schedule_entry(entry)
 
     def register_action(self, action_key: str, callback_fn: Callable[[], None]) -> None:
