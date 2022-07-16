@@ -88,7 +88,6 @@ class Conversation(metaclass=ConversationMeta):
             data = {}
         assert hasattr(self, new_state)
         state_fn = getattr(self, new_state)
-        print(state_fn)
         assert inspect.ismethod(state_fn)
         assert state_fn.is_conversation_state  # i.e. is annotated with @state
         self.conversation_tracker.set_current_conversation(

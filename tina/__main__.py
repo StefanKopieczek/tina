@@ -1,5 +1,5 @@
-from tina.playwright import test_playwright
+from tina.shopper.ocado import main
 
 
 if __name__ == "__main__":
-    test_playwright()
+    main()

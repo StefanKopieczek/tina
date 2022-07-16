@@ -1,1 +1,1 @@
-from .playwright_test import test_playwright
+from .playwright import test_playwright, PlaywrightSession

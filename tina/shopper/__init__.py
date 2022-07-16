@@ -1,0 +1,1 @@
+from .ocado import main

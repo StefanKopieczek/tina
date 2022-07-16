@@ -2,6 +2,7 @@ import logging
 from ..conversation import ConversationTracker
 from ..larder import StockCheck, maybe_check_stock
 from ..playwright import test_playwright
+from ..shopper.ocado import main
 from ..scheduler import Scheduler
 from urllib.parse import unquote
 
@@ -43,5 +44,5 @@ def ping(event, context):
 def manual(event, context):
     # Used for manual testing of new functions and workflows, by
     # editing the code below.
-    print(test_playwright())
+    main()
     return {"statusCode": 200, "body": "Done!"}
