@@ -1,1 +1,1 @@
-from .entrypoints import check_in, handle_message
+from .entrypoints import check_in, handle_message, ping, manual

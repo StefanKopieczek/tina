@@ -2,15 +2,11 @@ boto3==1.24.22
 boto3-stubs==1.24.22
 botocore==1.27.22
 botocore-stubs==1.27.22
-greenlet==1.1.2
 inflect==5.6.0
 jmespath==1.0.1
 mypy-boto3-dynamodb==1.24.12
-playwright==1.23.1
-pyee==8.1.0
 python-dateutil==2.8.2
 s3transfer==0.6.0
 six==1.16.0
 typing_extensions==4.3.0
 urllib3==1.26.9
-websockets==10.1

@@ -1,6 +1,7 @@
 import logging
 from ..conversation import ConversationTracker
 from ..larder import StockCheck, maybe_check_stock
+from ..playwright import test_playwright
 from ..scheduler import Scheduler
 from urllib.parse import unquote
 
@@ -33,3 +34,14 @@ def handle_message(event, context):
     conversations = ConversationTracker()
     conversations.handle_message(sender, body)
     return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
+
+
+def ping(event, context):
+    return {"statusCode": 200, "body": "Done!"}
+
+
+def manual(event, context):
+    # Used for manual testing of new functions and workflows, by
+    # editing the code below.
+    print(test_playwright())
+    return {"statusCode": 200, "body": "Done!"}
