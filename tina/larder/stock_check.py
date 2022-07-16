@@ -2,6 +2,7 @@ from datetime import timedelta
 import inflect
 import logging
 import re
+import random
 
 from random import choice
 
@@ -24,6 +25,7 @@ def maybe_check_stock():
             stock_check.initiate()
         else:
             logging.info("Stock is up to date - will not request stock check")
+            stock_check.reschedule()
 
 
 class StockCheck(Conversation):
@@ -37,7 +39,7 @@ class StockCheck(Conversation):
     ):
         super().__init__(conversation_tracker, recipient)
         if scheduler is None:
-            scheduler = Scheduler
+            scheduler = Scheduler()
         self.scheduler = scheduler
 
     def should_initiate(self):
@@ -68,7 +70,7 @@ class StockCheck(Conversation):
             self.ask_next_question()
         elif user_preference == "no":
             self.send("That's ok! Another time then.")
-            self.scheduler.do_with_delay(self.ACTION_KEY, timedelta(days=1))
+            self.reschedule()
         else:
             self.send("Sorry, I didn't quite get that. Try again?")
 
@@ -98,7 +100,6 @@ class StockCheck(Conversation):
             )
 
     def finish(self):
-        self.scheduler().do_with_delay(self.ACTION_KEY, timedelta(days=1))
         self.send(
             choice(
                 [
@@ -111,7 +112,12 @@ class StockCheck(Conversation):
             )
         )
         self.set_state("done")
+        self.reschedule()
 
     @state
     def done(self, _message, _data):
         self.send("No need to keep chatting to me - go do something fun!")
+
+    def reschedule(self, mean_hours=24):
+        delay = random.randint(int(mean_hours * 0.5), int(mean_hours * 1.5))
+        self.scheduler.do_with_delay(self.ACTION_KEY, timedelta(hours=delay))

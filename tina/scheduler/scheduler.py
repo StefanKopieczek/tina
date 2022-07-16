@@ -49,7 +49,6 @@ class Scheduler:
 
     def ensure_scheduled(self, action_key) -> None:
         existing_entries = self.persistence.get_entries_for_action(action_key)
-        logger.debug(existing_entries)
         if not existing_entries:
             logger.warn(f"Action {action_key} was not scheduled; will run immediately")
             self.do_at_time(action_key, self.clock())
