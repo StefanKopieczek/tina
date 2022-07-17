@@ -80,7 +80,12 @@ class StockCheck(Conversation):
         if due_items:
             p = inflect.engine()
             item = next(iter(due_items))
-            self.send(f"How many {p.plural(item.name)} do you have?")
+            if item.groupNoun is not None:
+                self.send(
+                    f"How many {p.plural(item.groupNoun)} of {item.name} do you have?"
+                )
+            else:
+                self.send(f"How many {p.plural(item.name)} do you have?")
             self.set_state("interpret_count", {"current_item": item.name})
         else:
             self.finish()
