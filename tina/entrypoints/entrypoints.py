@@ -1,4 +1,5 @@
 import logging
+from ..bagatelles import register_bagatelles
 from ..conversation import ConversationTracker
 from ..larder import StockCheck, maybe_check_stock
 from ..playwright import test_playwright
@@ -29,8 +30,9 @@ def check_in(event, context):
 
 
 def handle_message(event, context):
+    register_bagatelles()
     sender = unquote(event["From"])
-    body = unquote(event["Body"])
+    body = unquote(event["Body"]).replace("+", " ")
     logger.info("Handling a message from " + sender)
     conversations = ConversationTracker()
     conversations.handle_message(sender, body)

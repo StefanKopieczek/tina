@@ -1,10 +1,12 @@
 from __future__ import annotations
+from logging.handlers import MemoryHandler
 import inflect
 import inspect
 import logging
+from ..dialog import generic_reply
 from ..twilio import send_sms
 from .persistence import ConversationsPersistence
-from typing import Any, Type, TypeVar
+from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar
 
 
 logger = logging.getLogger(__name__)
@@ -17,8 +19,11 @@ class ConversationTypeRegistry:
     def register(self, conversation_type: Type[Conversation]) -> None:
         self.type_map[conversation_type.key] = conversation_type
 
-    def lookup(self, conversation_key: str) -> Type[Conversation]:
+    def get_conversation_handler(self, conversation_key: str) -> Type[Conversation]:
         return self.type_map[conversation_key]
+
+    def get_all_types(self) -> List[Type[Conversation]]:
+        return list(self.type_map.values())
 
 
 global_registry = ConversationTypeRegistry()
@@ -39,20 +44,52 @@ class ConversationTracker:
         maybe_conversation = self.persistence.get_current_conversation(sender)
 
         if maybe_conversation is None:
-            self.handle_user_initiated_conversation(sender, contents)
-            return
+            self.handle_spontaneous_message(sender, contents)
+        else:
+            conversation_key, state, data = maybe_conversation
+            self.handle_conversation_message(
+                conversation_key, state, data, sender, contents
+            )
 
-        conversation_key, state, data = self.persistence.get_current_conversation(
-            sender
-        )
+    def handle_spontaneous_message(self, sender, contents):
+        for conversation_type in self.registry.get_all_types():
+            try:
+                conversation = conversation_type(self, sender)
+                was_handled = conversation.handle_spontaneous_message(contents)
+                if was_handled:
+                    break
+            except Exception as e:
+                logger.exception("Exception when handling spontaneous message")
+                continue
+        else:
+            send_sms(sender, generic_reply())
+
+    def handle_conversation_message(
+        self,
+        conversation_key: str,
+        state: str,
+        data: Dict[str, any],
+        sender: str,
+        contents: str,
+    ) -> None:
+        try:
+            conversation_type = self.registry.get_conversation_handler(conversation_key)
+        except:
+            logger.error(
+                f"Unable to find handler for conversation '{conversation_key}'"
+            )
+            send_sms(
+                sender,
+                "Sorry, I completely lost track of what we were talking about. Never mind - it probably wasn't important!",
+            )
+            self.persistence.delete_current_conversation(conversation.recipient)
 
         try:
-            conversation_type = self.registry.lookup(conversation_key)
             conversation = conversation_type(self, sender)
             handler = getattr(conversation, state)
         except:
             logger.error(
-                f"Unable to find find handler for conversation state ({conversation_key},{state} - ending"
+                f"Unable to find handler for conversation state ({conversation_key},{state} - ending"
             )
             send_sms(
                 conversation.recipient,
@@ -71,12 +108,6 @@ class ConversationTracker:
             )
             raise e
 
-    def handle_user_initiated_conversation(self, sender, _contents):
-        send_sms(
-            sender,
-            "Hey! I'd love to chat but I've got some stuff to get on with. Catch you later?",
-        )
-
     def set_current_conversation(
         self, recipient: str, key: str, state: str, data: dict[str, Any]
     ) -> None:
@@ -92,9 +123,17 @@ class ConversationMeta(type):
             Conversation in inspect.getmro(base) for base in bases
         ), "All conversations must subtype Conversation"
         states = {}
+        new_request_handler = None
         for k, v in attrs.items():
-            if inspect.isfunction(v) and getattr(k, "is_conversation_state", False):
-                states[k] = v
+            if inspect.isfunction(v):
+                if getattr(k, "is_conversation_state", False):
+                    states[k] = v
+                if getattr(k, "is_new_request_handler", False):
+                    assert (
+                        new_request_handler is None
+                    ), "Only one @new_request_handler annotation is allowed per Conversation!"
+                    new_request_handler = v
+
         for base in bases:
             if hasattr(base, "_states"):
                 states.update(base._states)
@@ -105,20 +144,29 @@ class ConversationMeta(type):
             conversation_type.__module__ + "." + conversation_type.__qualname__
         )
         global_registry.register(conversation_type)
+
+        if new_request_handler is not None:
+            global_registry.register_for_user_initiation()
+
         return conversation_type
 
 
 class Conversation(metaclass=ConversationMeta):
     """
     All Conversations should inherit from this base class.
-    Conversations should have an __init__ that takes two arguments - a ConversationTracker and a recipient string.
+    Conversations should have an __init__ that takes two arguments (other than 'self') - a ConversationTracker and a recipient string.
     It must call `super(tracker, recipient)`.
-    Conversations should contain one or more state methods, annotated as @state.
+    Conversations should contain zero or more state methods, annotated as @state.
     Each state method should take two arguments - message contents (str) and data (dict from string keys to arbitrary values).
 
     When a conversation calls set_state, it is registering itself for a callback (in a future lambda call) when the recipient
     replies to the message. The Conversation will be reinitialized with the given recipient, and the corresponding state method
     will be called, passing the contents of the message and the stored data.
+
+    Conversations can also register for callbacks on new messages, outside of conversations, that meet specified predicates.
+    They do this by overriding handle_spontaneous_message, which is passed the contents of the message as a string.
+    They should return True if the message was handled, and False otherwise, so that the caller knows whether to pass the
+    message to other handlers.
     """
 
     def __init__(self, conversation_tracker: ConversationTracker, recipient: str):
@@ -141,6 +189,9 @@ class Conversation(metaclass=ConversationMeta):
 
     def send(self, message):
         send_sms(self.recipient, message)
+
+    def handle_spontaneous_message(self, contents) -> bool:
+        return False
 
 
 def state(fn):
