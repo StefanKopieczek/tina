@@ -104,7 +104,7 @@ class ConversationTracker:
             p = inflect.engine()
             send_sms(
                 conversation.recipient,
-                f"Gah, sorry, I hit {p.an(e.__class__)} while trying to reply to you. It's frustrating being a computer sometimes. Try again and let's see if I can get it right this time!",
+                f"Gah, sorry, I hit {p.an(str(e.__class__))} while trying to reply to you. It's frustrating being a computer sometimes. Try again and let's see if I can get it right this time!",
             )
             raise e
 
@@ -185,7 +185,7 @@ class Conversation(metaclass=ConversationMeta):
         )
 
     def end_conversation(self):
-        self.conversation_tracker.end_current_conversation()
+        self.conversation_tracker.end_current_conversation(self.recipient)
 
     def send(self, message):
         send_sms(self.recipient, message)
