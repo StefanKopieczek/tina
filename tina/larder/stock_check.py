@@ -116,12 +116,8 @@ class StockCheck(Conversation):
                 ]
             )
         )
-        self.set_state("done")
+        self.end_conversation()
         self.reschedule()
-
-    @state
-    def done(self, _message, _data):
-        self.send("No need to keep chatting to me - go do something fun!")
 
     def reschedule(self, mean_hours=24):
         delay = random.randint(int(mean_hours * 0.5), int(mean_hours * 1.5))

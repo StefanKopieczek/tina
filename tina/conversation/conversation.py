@@ -40,8 +40,11 @@ class ConversationTracker:
 
     def set_current_conversation(
         self, recipient: str, key: str, state: str, data: dict[str, Any]
-    ):
+    ) -> None:
         self.persistence.set_current_conversation(recipient, key, state, data)
+
+    def end_current_conversation(self, recipient: str) -> None:
+        self.persistence.delete_current_conversation(recipient)
 
 
 class ConversationMeta(type):
@@ -93,6 +96,9 @@ class Conversation(metaclass=ConversationMeta):
         self.conversation_tracker.set_current_conversation(
             self.recipient, self.key, new_state, data
         )
+
+    def end_conversation(self):
+        self.conversation_tracker.end_current_conversation()
 
     def send(self, message):
         send_sms(self.recipient, message)

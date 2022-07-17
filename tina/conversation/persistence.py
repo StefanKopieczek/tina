@@ -29,3 +29,6 @@ class ConversationsPersistence:
                 "Data": data,
             }
         )
+
+    def delete_current_conversation(self, recipient: str):
+        self.table.delete_item(Key={"Recipient": recipient})
