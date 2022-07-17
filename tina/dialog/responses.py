@@ -4,7 +4,16 @@ import re
 def yesorno(statement):
     statement = statement.lower()
     no_words = ["no", "nope", "not now", "negative", "sorry"]
-    yes_words = ["yes", "yep", "absolutely", "go ahead", "sure", "definitely"]
+    yes_words = [
+        "yes",
+        "yep",
+        "absolutely",
+        "go ahead",
+        "sure",
+        "definitely",
+        "ok",
+        "okay",
+    ]
 
     for word in no_words:
         if re.search(f"\\b{word}\\b", statement):
