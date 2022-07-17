@@ -1,8 +1,13 @@
 from __future__ import annotations
+import inflect
 import inspect
+import logging
 from ..twilio import send_sms
 from .persistence import ConversationsPersistence
 from typing import Any, Type, TypeVar
+
+
+logger = logging.getLogger(__name__)
 
 
 class ConversationTypeRegistry:
@@ -34,9 +39,30 @@ class ConversationTracker:
         conversation_key, state, data = self.persistence.get_current_conversation(
             sender
         )
-        conversation_type = self.registry.lookup(conversation_key)
-        conversation = conversation_type(self, sender)
-        getattr(conversation, state)(contents, data)
+
+        try:
+            conversation_type = self.registry.lookup(conversation_key)
+            conversation = conversation_type(self, sender)
+            handler = getattr(conversation, state)
+        except:
+            logger.error(
+                f"Unable to find find handler for conversation state ({conversation_key},{state} - ending"
+            )
+            send_sms(
+                conversation.recipient,
+                "Sorry, I completely lost track of what we were talking about. Never mind - it probably wasn't important!",
+            )
+            return
+
+        try:
+            handler(contents, data)
+        except Exception as e:
+            p = inflect.engine()
+            send_sms(
+                conversation.recipient,
+                f"Gah, sorry, I hit {p.an(e.__class__)} while trying to reply to you. It's frustrating being a computer sometimes. Try again and let's see if I can get it right this time!",
+            )
+            raise d
 
     def set_current_conversation(
         self, recipient: str, key: str, state: str, data: dict[str, Any]
