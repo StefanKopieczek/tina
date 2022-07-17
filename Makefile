@@ -1,6 +1,7 @@
 AWS_ACCOUNT_ID = 833033589552
 AWS_REGION = eu-west-1
-ECR_REPO = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/tina
+ECR_ADDRESS = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+ECR_REPO = $(ECR_ADDRESS)/tina
 LATEST_ECR_IMAGE = $(ECR_REPO):latest
 
 BASE_IMAGE_NAME = base
@@ -40,8 +41,16 @@ docker-build-test-runner: docker-build-tina
 .PHONY: docker
 docker: docker-build-tina
 
+#
+# ECR recipes
+#
+
+.PHONY: auth-to-ecr
+auth-to-ecr:
+	aws ecr get-login-password --profile stefankopieczek-iamadmin | docker login --username AWS --password-stdin $(ECR_ADDRESS)
+
 .PHONY: upload
-upload: docker-build-tina test
+upload: docker-build-tina test auth-to-ecr
 	docker tag tina/$(TINA_IMAGE_NAME) $(LATEST_ECR_IMAGE)
 	docker push $(LATEST_ECR_IMAGE)
 	make clean-up-old-images
