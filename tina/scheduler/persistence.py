@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from typing import Dict, List
-from .objects import ScheduleEntry, ScheduledAction
 from boto3 import Session
 from boto3.dynamodb.conditions import Key, Attr
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource, Table
+from .objects import ScheduleEntry, ScheduledAction
+from ..utils import to_epoch_time, parse_epoch_time
 
 
 SCHEDULE_TABLE = "TinaSchedule"
@@ -32,7 +33,7 @@ class SchedulePersistence:
     def delete_schedule_entry(self, entry: ScheduleEntry) -> None:
         self.table.delete_item(
             Key={
-                "ScheduledTime": _epoch_time(entry.timeUtc),
+                "ScheduledTime": to_epoch_time(entry.timeUtc),
                 "ActionKey": entry.action.actionKey,
             }
         )
@@ -40,21 +41,13 @@ class SchedulePersistence:
     @staticmethod
     def _serialize_entry(entry: ScheduleEntry) -> Dict[str, any]:
         return {
-            "ScheduledTime": _epoch_time(entry.timeUtc),
+            "ScheduledTime": to_epoch_time(entry.timeUtc),
             "ActionKey": entry.action.actionKey,
         }
 
     @staticmethod
     def _deserialize_entry(entry_item: Dict[str, any]) -> ScheduleEntry:
         return ScheduleEntry(
-            timeUtc=_parse_epoch_time(entry_item["ScheduledTime"]),
+            timeUtc=parse_epoch_time(entry_item["ScheduledTime"]),
             action=ScheduledAction(actionKey=entry_item["ActionKey"]),
         )
-
-
-def _epoch_time(time: datetime):
-    return int(time.timestamp())
-
-
-def _parse_epoch_time(epoch_time: int):
-    return datetime.fromtimestamp(epoch_time, timezone.utc)
