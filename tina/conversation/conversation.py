@@ -36,6 +36,12 @@ class ConversationTracker:
         self.registry = registry
 
     def handle_message(self, sender: str, contents: str) -> None:
+        maybe_conversation = self.persistence.get_current_conversation(sender)
+
+        if maybe_conversation is None:
+            self.handle_user_initiated_conversation(sender, contents)
+            return
+
         conversation_key, state, data = self.persistence.get_current_conversation(
             sender
         )
@@ -63,7 +69,13 @@ class ConversationTracker:
                 conversation.recipient,
                 f"Gah, sorry, I hit {p.an(e.__class__)} while trying to reply to you. It's frustrating being a computer sometimes. Try again and let's see if I can get it right this time!",
             )
-            raise d
+            raise e
+
+    def handle_user_initiated_conversation(self, sender, _contents):
+        send_sms(
+            sender,
+            "Hey! I'd love to chat but I've got some stuff to get on with. Catch you later?",
+        )
 
     def set_current_conversation(
         self, recipient: str, key: str, state: str, data: dict[str, Any]
