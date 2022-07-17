@@ -17,7 +17,7 @@ class SchedulePersistence:
 
     def get_due_entries(self, current_time: datetime = None) -> List[ScheduleEntry]:
         results = self.table.scan(
-            FilterExpression=Key("ScheduledTime").lte(_epoch_time(current_time))
+            FilterExpression=Key("ScheduledTime").lte(to_epoch_time(current_time))
         )["Items"]
         return list(map(self._deserialize_entry, results))
 
