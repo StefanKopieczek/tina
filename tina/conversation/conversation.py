@@ -52,6 +52,7 @@ class ConversationTracker:
                 conversation.recipient,
                 "Sorry, I completely lost track of what we were talking about. Never mind - it probably wasn't important!",
             )
+            self.persistence.delete_current_conversation(conversation.recipient)
             return
 
         try:
